@@ -1244,6 +1244,7 @@ type Network {
   igmpProxyFor: JSON
   macOverrideEnabled: Boolean
   wanIpAliases: JSON
+  wanProviderCapabilities: JSON
   ipv6Enabled: Boolean
   wanTypeV6: String
   ipv6SettingPreference: String

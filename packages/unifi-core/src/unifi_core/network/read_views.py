@@ -808,6 +808,7 @@ def shape_network_details(
             "igmp_proxy_for",
             "mac_override_enabled",
             "wan_ip_aliases",
+            "wan_provider_capabilities",
             "ipv6_enabled",
             "wan_type_v6",
             "ipv6_setting_preference",

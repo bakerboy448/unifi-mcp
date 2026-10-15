@@ -291,7 +291,8 @@ VPN_FIREWALL_ZONE_WARNING = (
     "wan_failover_priority (int), wan_sla (str, controller WAN-SLA configuration ID), "
     "report_wan_event (bool), wan_smartq_enabled (bool), wan_vlan_enabled (bool), "
     "igmp_proxy_upstream (bool), igmp_proxy_for (JSON: 'none' or list of network refs), "
-    "mac_override_enabled (bool), wan_ip_aliases (list). "
+    "mac_override_enabled (bool), wan_ip_aliases (list), "
+    "wan_provider_capabilities (object with positive-int keys download_kilobits_per_second and upload_kilobits_per_second). "
     "WAN IPv6 (dual-stack; does not affect IPv4 internet): ipv6_enabled (bool), wan_type_v6 (str), "
     "ipv6_setting_preference ('auto'/'manual'), "
     "ipv6_wan_delegation_type ('none'/'pd'/'single_network'/'static'), wan_dhcpv6_pd_size (int), "
@@ -391,6 +392,9 @@ async def update_network(
             - igmp_proxy_for (JSON): IGMP proxy downstream scope ('none' or list of network refs).
             - mac_override_enabled (boolean): Enable MAC clone/override on the WAN.
             - wan_ip_aliases (list): Secondary IP aliases on the WAN.
+            - wan_provider_capabilities (object): ISP rates, e.g.
+              {'download_kilobits_per_second': 940000, 'upload_kilobits_per_second': 880000};
+              either key may be sent alone, both must be positive integers.
             WAN IPv6 uplink fields (dual-stack; changing these does not drop IPv4 internet):
             - ipv6_enabled (boolean): Enable IPv6 on the WAN uplink.
             - wan_type_v6 (string): WAN IPv6 type (e.g. 'disabled', 'dhcpv6', 'slaac', 'static').

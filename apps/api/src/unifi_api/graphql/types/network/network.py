@@ -101,6 +101,7 @@ class Network:
     igmp_proxy_for: strawberry.scalars.JSON | None  # type: ignore[name-defined]
     mac_override_enabled: bool | None
     wan_ip_aliases: strawberry.scalars.JSON | None  # type: ignore[name-defined]
+    wan_provider_capabilities: strawberry.scalars.JSON | None  # type: ignore[name-defined]
     # WAN uplink — IPv6
     ipv6_enabled: bool | None
     wan_type_v6: str | None
@@ -219,6 +220,7 @@ class Network:
             igmp_proxy_for=raw.get("igmp_proxy_for"),
             mac_override_enabled=raw.get("mac_override_enabled"),
             wan_ip_aliases=raw.get("wan_ip_aliases"),
+            wan_provider_capabilities=raw.get("wan_provider_capabilities"),
             ipv6_enabled=raw.get("ipv6_enabled"),
             wan_type_v6=raw.get("wan_type_v6"),
             ipv6_setting_preference=raw.get("ipv6_setting_preference"),

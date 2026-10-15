@@ -329,6 +329,13 @@ class Network(BaseModel):
         default=None,
         description="Secondary IP aliases on the WAN interface",
     )
+    wan_provider_capabilities: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "ISP-advertised WAN rates: {'download_kilobits_per_second': int, "
+            "'upload_kilobits_per_second': int}. Used by Smart Queues and speed-test baselines"
+        ),
+    )
     # --- WAN uplink — IPv6 (dual-stack; changing these does not drop IPv4 internet) ---
     ipv6_enabled: Optional[bool] = Field(
         default=None,
@@ -536,6 +543,7 @@ def from_controller(raw: Any) -> Network:
         igmp_proxy_for=_get(raw, "igmp_proxy_for"),
         mac_override_enabled=_get(raw, "mac_override_enabled"),
         wan_ip_aliases=_get(raw, "wan_ip_aliases"),
+        wan_provider_capabilities=_get(raw, "wan_provider_capabilities"),
         ipv6_enabled=_get(raw, "ipv6_enabled"),
         wan_type_v6=_get(raw, "wan_type_v6"),
         ipv6_setting_preference=_get(raw, "ipv6_setting_preference"),
@@ -613,6 +621,25 @@ def _normalize_vlan_payload(payload: Dict[str, Any]) -> None:
         payload["vlan"] = int(payload["vlan"])
 
 
+_WAN_PROVIDER_CAPABILITY_KEYS = ("download_kilobits_per_second", "upload_kilobits_per_second")
+
+
+def _normalize_wan_provider_capabilities(value: Any) -> Dict[str, int]:
+    """Validate a write value for ``wan_provider_capabilities``; keys may be sent one at a time."""
+    keys_text = ", ".join(_WAN_PROVIDER_CAPABILITY_KEYS)
+    if not isinstance(value, dict) or not value:
+        raise ValueError(f"'wan_provider_capabilities' must be a non-empty object with key(s): {keys_text}.")
+    unknown = sorted(set(value) - set(_WAN_PROVIDER_CAPABILITY_KEYS))
+    if unknown:
+        raise ValueError(f"Unknown 'wan_provider_capabilities' key(s): {', '.join(unknown)}. Allowed: {keys_text}.")
+    result: Dict[str, int] = {}
+    for key, raw in value.items():
+        if isinstance(raw, bool) or not isinstance(raw, int) or raw <= 0:
+            raise ValueError(f"'wan_provider_capabilities.{key}' must be a positive integer (kilobits per second).")
+        result[key] = raw
+    return result
+
+
 def _validate_payload(fields: Dict[str, Any], *, operation: str) -> Network:
     if not isinstance(fields, dict) or not fields:
         payload_name = "network_data" if operation == "create" else "update_data"
@@ -638,6 +665,10 @@ def _validate_payload(fields: Dict[str, Any], *, operation: str) -> Network:
         if weight < 0 or weight > 100:
             raise ValueError("'wan_load_balance_weight' must be between 0 and 100.")
         normalized["wan_load_balance_weight"] = weight
+    if "wan_provider_capabilities" in normalized:
+        normalized["wan_provider_capabilities"] = _normalize_wan_provider_capabilities(
+            normalized["wan_provider_capabilities"]
+        )
     original_vlan = normalized.get("vlan")
     if isinstance(original_vlan, bool):
         raise ValueError("'vlan' must be an integer between 1 and 4094.")

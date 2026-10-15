@@ -58,6 +58,7 @@ class TestFieldSets:
             "igmp_proxy_for",
             "mac_override_enabled",
             "wan_ip_aliases",
+            "wan_provider_capabilities",
         ):
             assert field in MUTABLE_FIELDS, f"Expected {field!r} in MUTABLE_FIELDS"
 
@@ -307,6 +308,36 @@ class TestStrictValidation:
     def test_update_rejects_out_of_range_wan_load_balance_weight(self, value: int) -> None:
         with pytest.raises(ValueError, match="between 0 and 100"):
             validate_update({"wan_load_balance_weight": value})
+
+    def test_update_accepts_wan_provider_capabilities(self) -> None:
+        caps = {"download_kilobits_per_second": 940000, "upload_kilobits_per_second": 880000}
+        assert validate_update({"wan_provider_capabilities": caps}) == {"wan_provider_capabilities": caps}
+
+    def test_update_accepts_single_wan_provider_capability_key(self) -> None:
+        update = {"wan_provider_capabilities": {"upload_kilobits_per_second": 880000}}
+        assert validate_update(update) == update
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            {},
+            "940000",
+            {"download_kilobits_per_second": "940000"},
+            {"download_kilobits_per_second": 1.5},
+            {"download_kilobits_per_second": True},
+            {"download_kilobits_per_second": 0},
+            {"upload_kilobits_per_second": -1},
+            {"download_mbps": 940},
+        ],
+    )
+    def test_update_rejects_invalid_wan_provider_capabilities(self, value: object) -> None:
+        with pytest.raises(ValueError, match="wan_provider_capabilities"):
+            validate_update({"wan_provider_capabilities": value})
+
+    def test_wan_provider_capabilities_round_trips_from_controller(self) -> None:
+        caps = {"download_kilobits_per_second": 940000, "upload_kilobits_per_second": 880000}
+        n = from_controller({"_id": "n1", "name": "WAN", "wan_provider_capabilities": caps})
+        assert n.wan_provider_capabilities == caps
 
     @pytest.mark.parametrize("value", [-1, 150])
     def test_read_path_tolerates_out_of_range_wan_load_balance_weight(self, value: int) -> None:

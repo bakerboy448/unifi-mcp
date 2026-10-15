@@ -5665,6 +5665,15 @@
             ],
             "title": "Wan Networkgroup"
           },
+          "wan_provider_capabilities": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wan Provider Capabilities"
+          },
           "wan_sla": {
             "anyOf": [
               {

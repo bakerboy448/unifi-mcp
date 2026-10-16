@@ -360,7 +360,7 @@ class NetworkManager:
                 )
             return verify_write(
                 operation="update",
-                requested=update_data,
+                requested={k: merged_data[k] if isinstance(v, dict) else v for k, v in update_data.items()},
                 before=existing_network,
                 after=refetched,
                 unverifiable_fields=_UNVERIFIABLE_UPDATE_KEYS,

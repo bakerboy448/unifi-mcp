@@ -174,6 +174,39 @@ async def test_update_network_fails_when_not_persisted():
     assert result.error is not None and "igmp_snooping" in result.error
 
 
+_CAPS = {"download_kilobits_per_second": 300000, "upload_kilobits_per_second": 300000}
+
+
+async def test_update_network_partial_nested_dict_verifies_against_merged_value():
+    conn = _make_connection()
+    mgr = NetworkManager(conn)
+    before = _network(wan_provider_capabilities=dict(_CAPS))
+    after = {**before, "wan_provider_capabilities": {**_CAPS, "download_kilobits_per_second": 1000000}}
+    conn.request.side_effect = [[before], {}, [after]]
+
+    result = await mgr.update_network(
+        NETWORK_ID, {"wan_provider_capabilities": {"download_kilobits_per_second": 1000000}}
+    )
+
+    assert result.success is True
+    assert result.persisted_fields == ("wan_provider_capabilities",)
+    assert result.dropped_fields == ()
+
+
+async def test_update_network_partial_nested_dict_still_flags_dropped_subkey():
+    conn = _make_connection()
+    mgr = NetworkManager(conn)
+    before = _network(wan_provider_capabilities=dict(_CAPS))
+    conn.request.side_effect = [[before], {}, [before]]
+
+    result = await mgr.update_network(
+        NETWORK_ID, {"wan_provider_capabilities": {"download_kilobits_per_second": 1000000}}
+    )
+
+    assert result.success is False
+    assert result.dropped_fields == ("wan_provider_capabilities",)
+
+
 @pytest.mark.parametrize("purpose", ["site-vpn", "remote-user-vpn", "vpn-client", "vpn-server"])
 async def test_update_network_rejects_custom_firewall_zone_for_vpn_before_put(purpose):
     conn = _make_connection()
